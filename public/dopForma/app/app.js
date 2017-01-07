@@ -2,15 +2,14 @@ Ext.application({
     name: 'dopForma',
     appFolder: 'app',
     controllers: [
-           // 'dicWizardController'
+           'login'
     ],
     launch:function(){
-           alert('dddd');
-            /*
+    /*        
     Ext.create('Ext.window.Window', {
-    title: 'Довідники',
+    title: 'Авторизація',
     height: 300,
-    width: 300,
+    width:  300,
     
     items: [
            {
@@ -22,7 +21,7 @@ Ext.application({
            
     ]
     }).show();         
-            */
+    */        
             
             
     
