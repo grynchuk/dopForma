@@ -1,7 +1,7 @@
 <?php
 
 use dopForma\models\user;
-
+   
 $app->post(
     "/user",
     function () use ($app) {
