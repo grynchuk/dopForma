@@ -23,7 +23,7 @@ $config = new Ini(
 );
 
 //echo "<pre>".print_r($config->db->host,1)."</pre>";
-
+    
 $loader->register();
 
 $di = new FactoryDefault(); 
