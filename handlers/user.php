@@ -1,7 +1,8 @@
 <?php
 
 use dopForma\models\user;
-   
+use Phalcon\Db\Column;
+
 $app->post(
     "/user",
     function () use ($app) {
@@ -46,6 +47,69 @@ $app->get(
     }
 );
 
+
+$app->post('/users',
+        function () use($app){
+          
+        $d=$app->request->get('data');
+        $res=['success'=>true,
+              'data'=>''
+             ]; 
+//        var_dump(count($d));
+//        die();
+        
+        for($i=0, $l=count($d); $i<$l; $i++){
+            $u= new user();
+            $u->setAspId($d[$i]['aspirant_id']);
+            $u->setEmail($d[$i]['e_mail']);
+            $u->setRandPass();
+            if(!$u->create()){
+               $res["success"]=false;
+               $res['data']=  implode(',', $u->getMessages());
+            }
+        }  
+          
+          echo json_encode($res);
+        }
+        );
+
+
+
+$app->post(
+    '/users/auth',
+    function() use ($app)  {
+   
+ $param = [
+    "id" => $app->request->get('id'),
+    "password" => $app->request->get('password_'),
+];
+
+// Привязка типов параметров
+$types = [  
+    "id" => Column::BIND_PARAM_INT,
+    "password" => Column::BIND_PARAM_STR,
+];
+
+// Запрос роботов с параметрами, привязанными к строковым заполнителям и типам
+$us = user::find(
+    [
+        " id = :id: AND password_ = :password:",
+        "bind"      => $param,
+        "bindTypes" => $types,
+    ]
+);
+    
+    $res=["success"=>false, 'mess'=>'Невірна пошта або пароль'];
+    
+    if(count($us)){
+          $res=["success"=>true, 'mess'=>''];
+        
+    }
+    
+    echo json_encode($res);    
+    
+    }
+);
 
 
 

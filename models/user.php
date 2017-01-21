@@ -37,6 +37,17 @@ class user extends Model
    }
    
    
+   function setRandPass(){
+    $chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    $count = mb_strlen($chars);
+    for ($i = 0, $this->password_ = ''; $i < 10; $i++) {
+        $index = rand(0, $count - 1);
+        $this->password_.= mb_substr($chars, $index, 1);
+    }
+   }
+   
+   
+   
    function setAspId($id){
        if( filter_var($id, FILTER_VALIDATE_INT ) ){
            $this->asp_id=$id;

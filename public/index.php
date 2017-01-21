@@ -7,12 +7,15 @@ use Phalcon\Mvc\Micro;
 use Phalcon\Di\FactoryDefault;
 use Phalcon\Db\Adapter\Pdo\Postgresql;
 use Phalcon\Config\Adapter\Ini ;
+use Phalcon\Http\Request;
 
+
+$request = new Request();
 
 $loader = new Loader();
-
+ // 
 $loader->registerNamespaces(
-    [
+    [ 
         "dopForma\models" => __DIR__ . "/../models/",
     //    "dopForma\controllers" => __DIR__ . "/controllers/",
     ]
@@ -46,6 +49,8 @@ $app = new Micro($di);
 
 
 include_once __DIR__."/../handlers/user.php";
+
+include_once __DIR__."/../handlers/exam.php";
 
 
 
