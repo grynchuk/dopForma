@@ -15,30 +15,37 @@ namespace dopForma\models;
 
 use Phalcon\Mvc\Model;
 
-class exam extends Model
+class examTypes extends Model
 {
     
    protected $id ,
-             $exam_id,
+             $exam_type_id,
              $name_,
-             $exam_type; 
+             $max_number,
+             $min_number
+           ; 
     
    public function initialize(){
-        $this->setSource("exam");
+        $this->setSource("exam_types");
    }
    
    public function getSequenceName()
     {
-        return "next_exam";
+        return "next_exam_type";
     }
    
-   function setExamId($v){
-       $this->exam_id=$v;
+   function setExamTypeId($v){
+       $this->exam_type_id=$v;
    }
    
    
-   function setExamType($t){
-       $this->exam_type=$t;
+   function setMaxNumber($n){
+       $this->max_number=$n;
+   }
+   
+   
+   function setMinNumber($n){
+       $this->min_number=$n;
    }
    
    function setName($v){
