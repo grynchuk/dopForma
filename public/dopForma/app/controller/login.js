@@ -1,7 +1,8 @@
 Ext.define('dopForma.controller.login', {
     extend: 'Ext.app.Controller',
     models: [ 'users'
-              ,'exam' 
+              ,'exam'
+              
             ],
     stores: ['users'
              ,'exam'   
@@ -24,7 +25,21 @@ Ext.define('dopForma.controller.login', {
             }
         });
         
-       self.showAuth(); 
+        self.control({
+            '#choose':{
+                'click': self.makeChoice
+            }
+        });
+        
+       
+       self.getAuthData();
+       
+       if(self.userId){
+             self.showTabs();
+       }else{
+             self.showAuth();            
+       }
+        
         
         
     }
@@ -51,6 +66,7 @@ Ext.define('dopForma.controller.login', {
             authSuccess: function (form, action) {
              self.userId=Ext.ComponentQuery.query('form [name=id]')[0].value;
              self.password=Ext.ComponentQuery.query('form [name=password_]')[0].value;   
+             self.setAuthData();
              Ext.getCmp('loginWin').destroy();   
              self.showTabs();
             },
@@ -60,6 +76,23 @@ Ext.define('dopForma.controller.login', {
         });
     }
     
+    , setAuthData: function(){
+        localStorage.setItem('userId'  ,this.userId);
+        localStorage.setItem('password',this.password);
+        dopForma.getApplication().userId=this.userId;
+        dopForma.getApplication().password=this.password;
+    }
+    , getAuthData: function(){
+        this.userId=localStorage.getItem('userId');
+        this.password=localStorage.getItem('password');
+     } 
+    , logOut: function(){
+       localStorage.removeItem(userId);
+       localStorage.removeItem(password);
+    }
+    , makeChoice: function(){
+       
+    }    
     
 }
 );

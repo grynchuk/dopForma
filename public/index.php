@@ -17,7 +17,10 @@ $loader = new Loader();
 $loader->registerNamespaces(
     [ 
         "dopForma\models" => __DIR__ . "/../models/",
-        'dopForma\tools' => __DIR__.'/../tools/'
+        'dopForma\tools' => __DIR__.'/../tools/',
+        'dopForma\interfaces' => __DIR__.'/../interfaces/'
+        
+        
     //    "dopForma\controllers" => __DIR__ . "/controllers/",
     ]
 );

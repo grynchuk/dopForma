@@ -2,13 +2,25 @@
 use dopForma\models\exam;
 use Phalcon\Db\Column;
 use dopForma\models\examTypes; 
-use     dopForma\tools\useful;
+use dopForma\tools\useful;
+use dopForma\tools\responses\factory as respFac;
 // CRUD operations
 $app->get(
     "/exam",
     function () use ($app) {
     
-    //$data=$app->request->getJsonRawBody();
+    $d=exam::find();
+    $resp=respFac::create('ext',$app->request);
+    $resp->success=true;
+    $resp->total=count($d);
+    
+    for($i=0, $l=count($d); $i<$l; $i++){
+    $resp->data[]=[
+                    'id'=>$d[$i]->id,
+                    'name'=>$d[$i]->name_
+                   ];    
+    }     
+    $resp->send();
     
     }
 );
