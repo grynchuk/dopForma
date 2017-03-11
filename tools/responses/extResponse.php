@@ -19,8 +19,9 @@ extends \Phalcon\Http\Response
 implements \dopForma\interfaces\response{
     
     public $success=true,
-           $data,
-           $total ;
+           $data=[],
+           $total=0,
+           $message ;
     
     private $req,
             $resp;
@@ -43,11 +44,18 @@ implements \dopForma\interfaces\response{
         return json_encode(
         [
             'success'=> $this->success,
+            'message'=> $this->message,
             'data'=>  $this->data ,
             'total'=>  $this->total    
         ] 
                 );
     }
     
+    
+    function sendError($message){
+        $this->success=false;
+        $this->message=$message;    
+        $this->send();
+    }
     
 }

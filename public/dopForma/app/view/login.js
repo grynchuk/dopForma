@@ -32,14 +32,14 @@ Ext.define('dopForma.view.login', {
             xtype:     'combo',
             store:   'users',
             queryMode: 'local',
-            name: 'id',
+            name: 'userId',
             displayField: 'email',
             valueField: 'id', 
             fieldLabel: 'Пошта',
             allowBlank: false
         }, {
             xtype: 'textfield',
-            name: 'password_',
+            name: 'password',
             inputType: 'password',
             fieldLabel: 'Пароль',
             allowBlank: false

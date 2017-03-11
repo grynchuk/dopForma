@@ -2,22 +2,44 @@
 use dopForma\models\exam;
 use Phalcon\Db\Column;
 use dopForma\models\examTypes; 
+use dopForma\models\choice;
+use dopForma\models\user;
 use dopForma\tools\useful;
 use dopForma\tools\responses\factory as respFac;
 // CRUD operations
 $app->get(
     "/exam",
     function () use ($app) {
+   
+    $sql="
+select e.id as id,  e.name_ as name_
+       --, et.max_number, et.min_number , ch.num
+from exam e 
+     left join 
+     ( 
+     select  exam, count(id) as num from choice group by exam
+     ) ch on e.id=ch.exam,
+     exam_types et 
+      
+where e.exam_type=et.id 
+     and (
+          ( et.min_number>0 and et.max_number>0
+            and  (ch.num < et.max_number) or ch.num is null  )
+           or
+           (et.min_number=0 and et.max_number=0)
+         ) ";
+   
+     $resultset=$app->db->query($sql); 
+     $res=$resultset->fetchAll();
     
-    $d=exam::find();
     $resp=respFac::create('ext',$app->request);
     $resp->success=true;
-    $resp->total=count($d);
+    $resp->total=count($res);
     
-    for($i=0, $l=count($d); $i<$l; $i++){
+    for($i=0, $l=count($res); $i<$l; $i++){
     $resp->data[]=[
-                    'id'=>$d[$i]->id,
-                    'name'=>$d[$i]->name_
+                    'id'=>$res[$i]['id'],
+                    'name'=>$res[$i]['name_']
                    ];    
     }     
     $resp->send();
@@ -142,7 +164,45 @@ $app->get(
     }
 );
 
-
+$app->get('/exam/choice',       
+        function() use($app){
+           $exam=$app->request->get('exam');
+           if( !($exam>0) ) throw new \Exception ('Не корректный екзамен');
+           
+            $sql="select u.fio as fio
+                    from  choice c 
+                        , user_ u
+                        , exam  e  
+                    where c.exam=$exam
+                      and u.id=c.user_
+                      and c.exam=e.id";
+        
+        $r=$app->request;
+        $page=$r->get('page');
+        $start=$r->get('start');
+        $limit=$r->get('limit');        
+        
+        $resultset=$app->db->query($sql); 
+        $res=$resultset->fetchAll();
+         $data=[];  
+         
+        //  var_dump($res);
+        for($i=0,$l=count($res);
+            $i<$l;
+            $i++        
+           ){
+             $data[]= ['fio'=> $res[$i]['fio'] ]             ;
+           }   
+         
+        $resp=respFac::create('ext',$app->request);
+        $resp->success=true;
+        $resp->total=count($data);
+        $resp->data=$data;
+        $resp->send();  
+           
+           
+        }        
+        );
 
 
 

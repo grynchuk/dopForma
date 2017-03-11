@@ -2,6 +2,7 @@
 
 use dopForma\models\user;
 use Phalcon\Db\Column;
+use dopForma\tools\responses\factory as respFac;
 
 $app->post(
     "/user",
@@ -42,7 +43,10 @@ $app->get(
                  ];
        // echo " {$u->email} {$u->password_} {$u->id} {$u->asp_id} ".PHP_EOL;
     }        
-        echo json_encode($res);    
+        
+    //throw new \Exception('ERROR');
+    
+    echo json_encode($res);    
     
     }
 );
@@ -51,21 +55,24 @@ $app->get(
 $app->post('/users',
         function () use($app){
           
-        $d=$app->request->get('data');
+        $d=json_decode( $app->request->get('data'),1);
         $res=['success'=>true,
               'data'=>''
              ]; 
 //        var_dump(count($d));
 //        die();
-        
+//         echo "<pre>".print_r($d,1)."</pre>";
+//         die();
         for($i=0, $l=count($d); $i<$l; $i++){
             $u= new user();
             $u->setAspId($d[$i]['aspirant_id']);
             $u->setEmail($d[$i]['e_mail']);
+            $u->setFio($d[$i]['fio']);
             $u->setRandPass();
             if(!$u->create()){
+               // echo " {$d[$i]['aspirant_id']} -- {$d[$i]['e_mail']} <br>";
                $res["success"]=false;
-               $res['data']=  implode(',', $u->getMessages());
+               $res['data'].=  implode(',', $u->getMessages())." {$d[$i]['aspirant_id']}  {$d[$i]['e_mail']};  ";
             }
         }  
           
@@ -78,35 +85,12 @@ $app->post('/users',
 $app->post(
     '/users/auth',
     function() use ($app)  {
-   
- $param = [
-    "id" => $app->request->get('id'),
-    "password" => $app->request->get('password_'),
-];
-
-// Привязка типов параметров
-$types = [  
-    "id" => Column::BIND_PARAM_INT,
-    "password" => Column::BIND_PARAM_STR,
-];
-
-// Запрос роботов с параметрами, привязанными к строковым заполнителям и типам
-$us = user::find(
-    [
-        " id = :id: AND password_ = :password:",
-        "bind"      => $param,
-        "bindTypes" => $types,
-    ]
-);
+     
+    $resp=respFac::create('ext', $app->request  );
+    $resp->success=true;
+    $resp->send();
     
-    $res=["success"=>false, 'mess'=>'Невірна пошта або пароль'];
-    
-    if(count($us)){
-          $res=["success"=>true, 'mess'=>''];
-        
-    }
-    
-    echo json_encode($res);    
+    //echo json_encode($res);    
     
     }
 );

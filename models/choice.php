@@ -8,7 +8,7 @@
 namespace dopForma\models;
 
 use Phalcon\Mvc\Model;
-
+use Phalcon\Db\Column;
 class choice extends Model
 {
     
@@ -38,8 +38,43 @@ class choice extends Model
        $this->sort=$v;
    }   
    
-   function __get($name){
-       return $this->$name;
+   function getExam(){
+      return $this->exam;
    }
+   
+   function getUser(){
+      return $this->user_;
+   }
+   
+   function getSort(){
+       return $this->sort;
+   }
+      
+   static function getChoiceByUserAndNum($user, $num){
+        $param = [
+            "user_" => $user,
+            "sort" => $num,
+        ];
+  
+//        \dopForma\tools\useful::show($param);
+//        die('ff');
+        $types = [
+            "user_" => Column::BIND_PARAM_INT,
+            "sort"  => Column::BIND_PARAM_INT,
+        ];
+
+        $us = self::find(
+                        [
+                            " user_ = :user_: AND sort = :sort:",
+                            "bind" => $param,
+                            "bindTypes" => $types,
+                        ]
+        );
+//die('vv');
+        //$res = ["success" => false, 'mess' => 'Невірна пошта або пароль'];
+       return (count($us))? $us[0] : null ;
+        
+   }
+   
 }
 

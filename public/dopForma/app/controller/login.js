@@ -2,39 +2,77 @@ Ext.define('dopForma.controller.login', {
     extend: 'Ext.app.Controller',
     models: [ 'users'
               ,'exam'
-              
+             , 'choice' 
+             , 'totalChoice'
+             , 'examUser'
             ],
     stores: ['users'
-             ,'exam'   
+             ,'exam'  
+             , 'choice'
+             , 'totalChoice'
+             , 'examUser'
             ],
     views: ['login',
             'choose',
-            'tabPanel'
+            'tabPanel',
+            'totalChoise',
+             'examUser'
            ],
     userId: 0,
     password: '',
     init: function () {
+        
       var self=this;  
-         this.listen({
+      
+         self.listen({
             store: {
-                '#dicSetStore': {
-                    load: function(context, records){
-                              this.makeElList(records);                        
-                      }
-                }
-            }
+                '#choiceStore': {
+                      exception: self.handleException, 
+                      load: self.setData,
+                      write: self.refreshTotalChoice
+                 }
+                 
+            },
+//            proxy : {
+//                '*':{
+//                    exception: function(){ alert('ddddd'); }
+//                }
+//            }
         });
         
         self.control({
             '#choose':{
                 'click': self.makeChoice
-            }
+            },
+            '#totalChoise':{
+                 'rowclick': self.showSpec     
+             }
+             ,
+             '#dopFormaMainPanel':{
+                  'close': self.logOut
+             }
+             ,'#reset':{
+                 'click': function(){
+                     self.choiceStore.load();
+                     self.examStore.clearFilter();
+                 }
+             }
+            
         });
-        
+       
+       self.examUser= Ext.StoreManager.lookup('examUser');
+       self.examStore=Ext.StoreManager.lookup('examStore');
+       self.choiceStore=Ext.StoreManager.lookup('choiceStore');
+       self.totalChoiceStore=Ext.StoreManager.lookup('totalChoiceStore');
+       
+       self.choiceStore
+           .getProxy()
+           .on('exception', self.handleException);
        
        self.getAuthData();
        
        if(self.userId){
+             self.loadData();
              self.showTabs();
        }else{
              self.showAuth();            
@@ -43,6 +81,7 @@ Ext.define('dopForma.controller.login', {
         
         
     }
+    
     
     ,  showTabs: function(){
         Ext.create('dopForma.view.tabPanel', {
@@ -57,6 +96,35 @@ Ext.define('dopForma.controller.login', {
     
     , setSecret: function(){
          
+         
+    }
+    , loadData :function(){
+        var self=this,
+            auth={
+         
+                userId: localStorage.getItem('userId'),
+              password: localStorage.getItem('password')
+        
+            };
+        
+        self.examStore
+            .getProxy()
+            .setExtraParams(auth); 
+        self.choiceStore
+            .getProxy()
+            .setExtraParams(auth);
+    
+        self.totalChoiceStore
+            .getProxy()
+            .setExtraParams(auth);
+    
+        self.examStore.load({
+            callback:function(){
+             self.choiceStore.load();                
+             self.totalChoiceStore.load();
+            }
+        });
+             
     }
     ,  showAuth: function(){
         var self=this;
@@ -64,14 +132,17 @@ Ext.define('dopForma.controller.login', {
             method: 'post', 
             url: 'http://127.0.0.5/users/auth', 
             authSuccess: function (form, action) {
-             self.userId=Ext.ComponentQuery.query('form [name=id]')[0].value;
-             self.password=Ext.ComponentQuery.query('form [name=password_]')[0].value;   
+                
+             self.userId=Ext.ComponentQuery.query('form [name=userId]')[0].value;
+             self.password=Ext.ComponentQuery.query('form [name=password]')[0].value;   
              self.setAuthData();
+             self.loadData();             
              Ext.getCmp('loginWin').destroy();   
              self.showTabs();
+             
             },
             authFail:function(form, action){
-                  Ext.getCmp('authRes').setValue(action.result.mess);               
+                  Ext.getCmp('authRes').setValue(action.result.message);               
             }
         });
     }
@@ -91,8 +162,47 @@ Ext.define('dopForma.controller.login', {
        localStorage.removeItem(password);
     }
     , makeChoice: function(){
-       
+       var   form=Ext.getCmp('choiceForma')
+           , record=form.getRecord();
+           form.updateRecord(record);
     }    
-    
+    , handleException: function(cont, req, op){
+        var resp=JSON.parse(req.responseText);
+        alert(resp.message);       
+        //console.log(arguments);
+    }
+    , setData:function(cont, records){
+        
+        var forma=Ext.getCmp('choiceForma');
+        if(forma){
+        forma.loadRecord(records[0]);
+        forma.filterExam([
+            records[0].get('exam1'),
+            records[0].get('exam2'),
+            records[0].get('exam3')
+        ]);
+        }
+        
+    }
+    ,showSpec: function(cont, rec ){
+        
+        this.examUser
+            .getProxy()
+            .setExtraParams({
+                exam : rec.get('exam'),
+                userId: localStorage.getItem('userId'),
+                password: localStorage.getItem('password')
+            }) ;
+        this.examUser.load();         
+    }
+    , refreshTotalChoice: function(){
+        this.totalChoiceStore.load();
+    }
+    , logOut: function(){
+        
+        localStorage.removeItem('userId');
+        localStorage.removeItem('password');
+        this.showAuth(); 
+    }
 }
 );
