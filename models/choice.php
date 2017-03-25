@@ -15,7 +15,8 @@ class choice extends Model
    protected $id ,
              $user_,
              $exam,
-             $sort; 
+             $sort,
+             $ch_date; 
     
    public function initialize(){
         $this->setSource("choice");
@@ -29,6 +30,16 @@ class choice extends Model
    function setExam($v){
        $this->exam=$v;
    }
+  
+   function setDate($d){
+       $r=($d instanceof \DateTime )? $d: new \DateTime($d); 
+      $this->ch_date=$r->format('d.m.Y');
+   }
+   
+   function getDate(){
+      return  new \DateTime( $this->ch_date);
+   }
+   
    
    function setUser($v){
        $this->user_=$v;

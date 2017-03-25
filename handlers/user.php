@@ -1,6 +1,7 @@
 <?php
 
 use dopForma\models\user;
+use dopForma\models\passRestore;
 use Phalcon\Db\Column;
 use dopForma\tools\responses\factory as respFac;
 
@@ -91,6 +92,69 @@ $app->post(
     $resp->send();
     
     //echo json_encode($res);    
+    
+    }
+);
+
+
+
+$app->get(
+         '/users/setNewPass/{code}'
+        ,function($code) use ($app){
+    
+           $pr=  passRestore::findFirst(" code='$code' ");
+           
+           
+          
+           $user=  user::findFirst($pr->user_);
+
+           $user->setPass($pr->pass);
+           if(!$pr->delete()){ die(implode('<br>',$pr->getMessages())); }
+           $res=
+               (!$user->save())
+                   ?
+                  implode('<br>',$user->getMessages()) 
+                   :
+                   "Пароль Змінено"
+                   ;
+             
+           die($res);         
+        } 
+        );
+
+$app->post(
+    '/users/setNewPass',
+    function() use ($app)  {
+   
+    
+    $id=$app->request->get('userId');
+    $user=  user::findFirst((int)$id);
+    $user->setRandPass();
+    $host=$app->request->getHttpHost();
+    
+    
+    $pr= new passRestore();
+    $pr->setCode();
+    $pr->setPass(
+            $user->password_
+            );
+    $pr->setUser($user->id);
+    $pr->create();
+    $message = Swift_Message::newInstance('зміна паролю')
+     ->setFrom(array('aspirant_office@ukr.net' ))
+     ->setTo(array($user->email))
+     ->setBody(" Зміна паролю! 
+                 Новый пароль : $user->password_
+                 Для зміни паролю  перейдіть за посиланням  $host/users/setNewPass/$pr->code    
+                ");
+                
+    
+    
+    $res= Swift_Mailer::newInstance($app->smtpTramsport)->send($message);
+   
+    $resp=respFac::create('ext', $app->request  );
+    $resp->success=(bool)$res;
+    $resp->send();
     
     }
 );

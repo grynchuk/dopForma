@@ -12,20 +12,71 @@ $app->get(
     "/totalChoice",
     function () use ($app) {
      
+       $searchHandler=[
+           
+           'exam'=> function($val){
+             return " e.name_ like '%$val%' ";
+           }
+       ];
+       $searchCond=[];
+       
+       $sortHandler=[
+           'exam'=> function($order){
+             return ' e.name_ '.$order;
+           },
+           'num'=> function($order){
+             return ' count(c.user_) '.$order;
+           },        
+           'minNum'=>function($order){
+               return ' et.min_number  '.$order;
+           },        
+           'maxNum'=>function($order){
+               return ' et.max_number  '.$order;
+           }        
+                   
+       ];
+       
+     
     
+        
+        $r=$app->request;
+        $page=$r->get('page');
+        $start=$r->get('start');
+        $limit=$r->get('limit');        
+        $sort=$r->get('sort');
+        $filter=$r->get('filter');
+        $props=[ 'exam',  'num', 'minNum','maxNum'];
+        if($sort){
+            $sort=json_decode($sort,1)[0];
+           // useful::show($sort);
+        }
+        
+        if($filter){
+            $filter=json_decode($filter,1);      
+            $filter=array_reduce($filter, function($car, $item) use($searchHandler){
+               return  $car. ' and '.$searchHandler[$item['property']]($item['value']);
+            });
+        }else{
+            $filter='';
+        }
+        
         $sql="select e.id as exam,  et.max_number as maxNum, et.min_number as minNum , count(c.user_) as num
 from exam e 
 left join choice c on e.id=c.exam 
 , exam_types et
 where
  et.id=e.exam_type
-group by e.id , et.max_number, et.min_number";
+ ".$filter."
+group by e.id , et.max_number, et.min_number
+".(                                            
+           ($sort and array_key_exists( $sort['property'], $sortHandler ))
+                ?
+                ' order by '.$sortHandler[$sort['property']]($sort['direction'])
+                :
+                ''
+                )
+               ;
         
-        $r=$app->request;
-        $page=$r->get('page');
-        $start=$r->get('start');
-        $limit=$r->get('limit');        
-        $props=[ 'exam',  'num', 'minNum','maxNum'];
         
         $resultset=$app->db->query($sql); 
         $res=$resultset->fetchAll();

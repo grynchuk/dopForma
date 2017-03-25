@@ -1,6 +1,8 @@
 nbproject/
-public/
- !public/dopFprma/app/
+public/*
+ !/public/index.php
+ !/public/.htaccess
+ !/public/dopFprma/app/
 test.html
 config.ini
 composer/

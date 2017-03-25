@@ -31,6 +31,10 @@ class useful {
    public static function conv($d, $init='windows-1251', $target='utf-8' ){
        return iconv($init,$target, $d );
    }
-  
-
+   
+   
+   public static function sendEmail($to, $subject ,  $text){
+       
+   }
+   
 }

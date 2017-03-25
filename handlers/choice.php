@@ -93,8 +93,12 @@ $app->put(
             $ch= new choice();
             $ch->setUser($userId);
             $ch->setSort((int)$val);
-            $ch->setExam($data['exam'.$val]);
+            $ch->setExam($data['exam'.$val]);            
         }
+        $ch->setDate( new \DateTime() );
+        
+        
+        
         if(!$ch->save()){             
              throw new \Exception(implode('<br>', $ch->getMessages()));
         }

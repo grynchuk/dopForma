@@ -4,6 +4,10 @@
 //var_dump($d);
 // Создаём менеджер событий
 
+include_once __DIR__."/../vendor/autoload.php";
+require_once '../vendor/swiftmailer/swiftmailer/lib/swift_required.php';
+
+
 use Phalcon\Loader;
 use Phalcon\Mvc\Micro;
 use Phalcon\Di\FactoryDefault;
@@ -54,20 +58,44 @@ $di->set(
     }
 ); 
 
+$di->set(
+        "smtpTramsport"
+        ,function() use ($config){
+        return Swift_SmtpTransport::newInstance(
+                   $config->mailSMTP->server,
+                   $config->mailSMTP->port,
+                    $config->mailSMTP->encrypt
+                  )
+                 ->setUsername($config->mailSMTP->user)
+                 ->setPassword($config->mailSMTP->password);
+    
+        }
+        
+        );
+
+
 $eventsManager = new EventsManager();
 $eventsManager->attach(
     "micro:beforeExecuteRoute",
     function (Event $event, $app) {
-        
+        $url= $app->request->getServer('SCRIPT_URL');
+              //die($url); 
          if(
-                   $app->request->getServer('SCRIPT_URL')=='/users'
-               and $app->request->isGet()
+              (     $app->request->getServer('SCRIPT_URL')=='/users'
+               and $app->request->isGet())
+                                  or(
+                      !(strpos( $url, '/users/setNewPass' )===false)   
+                         and
+                         ($app->request->isGet() or $app->request->isPost() )
+                                          )
+
+                 
            ){
              
            }else{
 //               echo $app->request->get('userId').'   '
 //                  .$app->request->get('password').'   ';
-              // die();
+//               die();
               try{
                 user::checkUser(
                     $app->request->get('userId')
