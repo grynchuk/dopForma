@@ -60,11 +60,27 @@ $app->post('/users',
         $res=['success'=>true,
               'data'=>''
              ]; 
-//        var_dump(count($d));
-//        die();
-//         echo "<pre>".print_r($d,1)."</pre>";
-//         die();
+
+        $users= user::find(" id > 0  ");
+        $refUsers=[];
+        for($i=0, $l=count($users); $i<$l; $i++){
+        $refUsers[$users[$i]->asp_id]=$users[$i];    
+        }
+        
+        
         for($i=0, $l=count($d); $i<$l; $i++){
+            
+            
+            if( array_key_exists($d[$i]['aspirant_id'], $refUsers  ) ){
+                $exsUser=$refUsers[$d[$i]['aspirant_id']];
+                $exsUser->setEmail($d[$i]['e_mail']);
+                $exsUser->setFio($d[$i]['fio']);
+                if(!$exsUser->save()){
+                    $res["success"]=false;
+                    $res['data'].=implode(',',$exsUser->getMessages() );        
+                }
+            }else{
+            
             $u= new user();
             $u->setAspId($d[$i]['aspirant_id']);
             $u->setEmail($d[$i]['e_mail']);
@@ -74,7 +90,9 @@ $app->post('/users',
                // echo " {$d[$i]['aspirant_id']} -- {$d[$i]['e_mail']} <br>";
                $res["success"]=false;
                $res['data'].=  implode(',', $u->getMessages())." {$d[$i]['aspirant_id']}  {$d[$i]['e_mail']};  ";
+            }    
             }
+            
         }  
           
           echo json_encode($res);
@@ -103,9 +121,6 @@ $app->get(
         ,function($code) use ($app){
     
            $pr=  passRestore::findFirst(" code='$code' ");
-           
-           
-          
            $user=  user::findFirst($pr->user_);
 
            $user->setPass($pr->pass);
@@ -117,7 +132,6 @@ $app->get(
                    :
                    "Пароль Змінено"
                    ;
-             
            die($res);         
         } 
         );
@@ -125,8 +139,6 @@ $app->get(
 $app->post(
     '/users/setNewPass',
     function() use ($app)  {
-   
-    
     $id=$app->request->get('userId');
     $user=  user::findFirst((int)$id);
     $user->setRandPass();

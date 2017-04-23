@@ -1,15 +1,14 @@
 <?php
 
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 
 /**
- * Description of user
+ * Модель для работы с дисциплинами 
  *
  * @author grynchuk
+ * @property int $id  идентификатор
+ * @property int $exam_id  идентификатор идентификатор на стороне АспДок
+ * @property string $name_ название дисциплины 
+ * @property int $exam_type тип дисциплины
  */
 namespace dopForma\models;
 
@@ -31,7 +30,10 @@ class exam extends Model
     {
         return "next_exam";
     }
-   
+   /**
+    * 
+    * @param int $v устанавливае ид дисц из аспДок
+    */
    function setExamId($v){
        $this->exam_id=$v;
    }
@@ -42,6 +44,8 @@ class exam extends Model
    }
    
    function setName($v){
+//       var_dump($v);
+//       die('fff');
            $this->name_=$v;
    }
    

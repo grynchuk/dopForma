@@ -72,8 +72,7 @@ class user extends Model {
             "password" => $password,
         ];
   
-//        \dopForma\tools\useful::show($param);
-//        die('ff');
+   
         $types = [
             "id" => Column::BIND_PARAM_INT,
             "password" => Column::BIND_PARAM_STR,
@@ -87,6 +86,8 @@ class user extends Model {
                         ]
         );
         
+//        var_dump($param, $us);
+//        die('ff'); 
         //$res = ["success" => false, 'mess' => 'Невірна пошта або пароль'];
        
         if (!count($us)) {

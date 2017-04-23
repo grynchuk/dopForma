@@ -47,23 +47,79 @@ where e.exam_type=et.id
     }
 );
 
+/**
+ * Создание нового экзамена 
+ */
 
 $app->post(
     "/exam",
     function () use ($app) {
+    $errors='';
+    $req=$app->request;
+    $data=json_decode($req->get('data'),1);
     
-   // $data=$app->request->getJsonRawBody();
+    $exam= new exam();
+    $exam->setExamId($data['exam_id']);
+    $exam->setName(useful::convToUTF8($data['name_']));
+    if($data['exam_type_id']>0){
+       $type= examTypes::findFirst([
+          " exam_type_id = {$data['exam_type_id']} " 
+       ]);
+       if($type){
+                   $exam->setExamType($type->id);
+       }     
+    }
+    
+    if(!$exam->create()){
+              $errors=' Error '.implode(',', $exam->getMessages()) ;        
+    }
+    
+        $resp=respFac::create('ext',$app->request);
+        $resp->success=($errors)?false:true;
+        $resp->data = ($errors)?:'ok'; 
+        $resp->send();  
+      
     
     }
 );
 
 
-
+/** 
+ * Обновление экзамена
+ */
 $app->put(
     "/exam",
     function () use ($app) {
+     
+    $errors='';
+    $req=$app->request;
+    $data=$app->request->getJsonRawBody(TRUE);
+//    useful::show($data);
+//    die('dd');
+    $data['exam_id']=(int)$data['exam_id'];
+    if(!($data['exam_id']>0)){
+        $errors='Не корректный exam_id';
+    }else{
+    //$exam= examTypes::findFirst(" exam_id = {$data['exam_id']} ");
+    $exam= exam::findFirst(" exam_id = {$data['exam_id']}");
+    $examType= examTypes::findFirst(" exam_type_id = {$data['exam_type_id']}");
+    if($exam and $examType){
+        $exam->setName($data['name_']);
+        $exam->setExamType($examType->id);
+//        var_dump($exam->save());
+//        die();
+       if(!$exam->save()){
+              $errors=' Error '.implode(',', $exam->getMessages()) ;        
+       }
+    }
     
-    //$data=$app->request->getJsonRawBody();
+    }
+    
+        $resp=respFac::create('ext',$app->request);
+        $resp->success=($errors)?false:true;
+        $resp->message = ($errors)?:'ok'; 
+        $resp->send();  
+     
     
     }
 );
@@ -72,46 +128,140 @@ $app->put(
 $app->delete(
     "/exam",
     function () use ($app) {
-    
-    //$data=$app->request->getJsonRawBody();
-    
+     $id=$app->request->get('exam_id');
+     $error='';
+     if($id>0){
+     $exam=  exam::findFirst(" exam_id = {$id} "); 
+     if($exam){
+         if(!$exam->delete()){
+            
+           $error=implode(',', $exam->getMessages());    
+         }
+     }else{
+      //    die('fffff');
+         $error= 'Запись не найдена';
+     }
+         
+     }else{
+      $error='Не корректный ид'  ;  
+     }
+        $resp=respFac::create('ext',$app->request);
+        $resp->success=($error)? false : true ;
+        $resp->message=($error)?: 'ok';
+        $resp->send();  
+     
     }
 );
+
+//
+
 
 
 // list operations
 
-
+// типы  экзаменов
+/**
+ * Добавляет тип экзамена
+ */
 $app->post('/exams/types',
         function () use($app){
           
         $d=$app->request->get('data');
         $d=json_decode($d, true);
-    //    useful::show($d);
-//        echo "<pre>".print_r($d,1)."</pre>";
-//        die();
-        $res=['success'=>true,
-              'data'=>''
-             ]; 
-        
+        if(array_key_exists('exam_type_id', $d )){
+            $d=[$d];
+        }
+//        useful::show($d);
+//        die('dd');
+        $errors='';
         for($i=0, $l=count($d); $i<$l; $i++){
             $u= new examTypes();            
-            
-          
             $u->setName($d[$i]['name_']);
             $u->setExamTypeId( $d[$i]['exam_type_id'] );
             $u->setMaxNumber(  $d[$i]['max_number'] );
             $u->setMinNumber(  $d[$i]['min_number'] );            
             if(!$u->create()){
-               $res["success"]=false;
-               $res['data']=  implode(',', $u->getMessages());
+              $errors=  implode(',', $u->getMessages());
             }
          }   
           
-          echo json_encode($res);
+        //  echo json_encode($res);
+          
+        $resp=respFac::create('ext',$app->request);
+        $resp->success=($errors)?false:true;
+        $resp->message=$errors;
+        //$resp->total=count($data);
+        $resp->data=($errors)?:'ok' ;
+        $resp->send();
+          
         }
         );
-
+/**
+ * Обновляет тип экзамена
+ */
+$app->put('/exams/types',
+        function () use($app){
+         
+    $errors='';
+    
+    $data=$app->request->getJsonRawBody(TRUE);
+//    useful::show($data);
+//    die('dd');
+    $data['exam_type_id']=(int)$data['exam_type_id'];
+    if(!($data['exam_type_id']>0)){
+        $errors='Не корректный exam_type_id';
+    }else{
+    $type= examTypes::findFirst(" exam_type_id = {$data['exam_type_id']}");
+    if($type){
+        $type->setName($data['name_']);
+        $type->setMinNumber($data['min_number']);
+        $type->setMaxNumber($data['max_number']);
+       if(!$type->save()){
+              $errors=' Error '.implode(',', $type->getMessages()) ;        
+       }
+       }else{
+              $errors='Exam type not found';
+       }
+        }
+        
+        $resp=respFac::create('ext',$app->request);
+        $resp->success=($errors)?false:true;
+        $resp->message=$errors;
+        //$resp->total=count($data);
+        $resp->data=($errors)?$type:'' ;
+        $resp->send();  
+        
+        }
+        );        
+ /**
+  * Удаляет тип экзамена
+  */       
+$app->delete('/exams/types',
+        function () use($app){
+         
+         $id=$app->request->get('exam_type_id');
+     $error='';
+     if($id>0){
+     $examType= examTypes::findFirst(" exam_type_id = {$id} "); 
+     if($examType){
+         if(!$examType->delete()){
+           $error=implode(',', $exam->getMessages());    
+         }
+     }else{
+      //    die('fffff');
+         $error= 'Запись не найдена';
+     }
+         
+     }else{
+      $error='Не корректный ид'  ;  
+     }
+        $resp=respFac::create('ext',$app->request);
+        $resp->success=($error)? false : true ;
+        $resp->message=($error)?: 'ok';
+        $resp->send();  
+     }
+        );        
+////////        
 $app->post(
     "/exams",
     function () use ($app) {

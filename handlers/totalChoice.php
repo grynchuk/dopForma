@@ -62,7 +62,7 @@ $app->get(
         
         $sql="select e.id as exam,  et.max_number as maxNum, et.min_number as minNum , count(c.user_) as num
 from exam e 
-left join choice c on e.id=c.exam 
+left join choice c on e.id=c.exam  and  to_char( now()  ,'YYYY')=to_char(ch_date ,'YYYY')
 , exam_types et
 where
  et.id=e.exam_type
@@ -76,7 +76,7 @@ group by e.id , et.max_number, et.min_number
                 ''
                 )
                ;
-        
+        //throw new \Exception($sql);
         
         $resultset=$app->db->query($sql); 
         $res=$resultset->fetchAll();

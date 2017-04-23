@@ -22,6 +22,7 @@ Ext.define('dopForma.controller.login', {
     password: '',
     init: function () {
         
+        
       var self=this;  
       
          self.listen({
@@ -56,6 +57,9 @@ Ext.define('dopForma.controller.login', {
                      self.choiceStore.load();
                      self.examStore.clearFilter();
                  }
+             },
+             '#passRestore':{
+                 'click': self.passRestore
              }
             
         });
@@ -168,13 +172,14 @@ Ext.define('dopForma.controller.login', {
     }    
     , handleException: function(cont, req, op){
         var resp=JSON.parse(req.responseText);
-        alert(resp.message);       
+        Ext.Msg.alert('Повідомлення',  resp.message);
+        //alert(resp.message);       
         //console.log(arguments);
     }
     , setData:function(cont, records){
         
         var forma=Ext.getCmp('choiceForma');
-        if(forma){
+        if(forma && records[0]){
         forma.loadRecord(records[0]);
         forma.filterExam([
             records[0].get('exam1'),
@@ -203,6 +208,36 @@ Ext.define('dopForma.controller.login', {
         localStorage.removeItem('userId');
         localStorage.removeItem('password');
         this.showAuth(); 
+    }
+    , passRestore: function(){
+     
+     var user= Ext.ComponentQuery.query('combo[name="userId"]')[0].getValue();
+     
+     if(!(user>0)) {
+             Ext.Msg.alert('Повідомлення',  ' Оберіть електронну пошту ');
+             return;      
+     }
+     
+     Ext.getCmp('loginWin').mask(' Відправляю листа з паролем... ');
+
+     
+     Ext.Ajax.request({
+            url: window.myHost+'/users/setNewPass',
+            method: 'POST', 
+            //extraParams:
+            params:
+                    {
+                 userId: user
+                },
+            success: function(response, opts) {
+                       Ext.getCmp('loginWin').unmask();           
+                       Ext.Msg.alert('Повідомлення',  ' Вам відправлено листа з новим  паролем. ');
+                      },
+
+            failure: function(response, opts) {
+                console.log('server-side failure with status code ' + response.status);
+            }
+     });
     }
 }
 );

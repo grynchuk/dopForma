@@ -78,8 +78,13 @@ $eventsManager = new EventsManager();
 $eventsManager->attach(
     "micro:beforeExecuteRoute",
     function (Event $event, $app) {
+          
+    
+    $userId=trim($app->request->get('userId'));
+    $pwd=trim($app->request->get('password'));          
+    // die(" $userId -- $pwd  ");  
         $url= $app->request->getServer('SCRIPT_URL');
-              //die($url); 
+               
          if(
               (     $app->request->getServer('SCRIPT_URL')=='/users'
                and $app->request->isGet())
@@ -93,13 +98,15 @@ $eventsManager->attach(
            ){
              
            }else{
+               
+               
 //               echo $app->request->get('userId').'   '
 //                  .$app->request->get('password').'   ';
 //               die();
               try{
                 user::checkUser(
-                    $app->request->get('userId')
-                  , $app->request->get('password')
+                    $userId
+                  , $pwd
                   );
                 
                }catch( Exception $e ){
@@ -143,8 +150,8 @@ include_once __DIR__."/../handlers/totalChoice.php";
 
 
 try{    
-$app->setEventsManager($eventsManager);    
-$app->handle();
+   $app->setEventsManager($eventsManager);    
+   $app->handle();
 }catch(Exception $e){
     respFac::create('ext',$app->request)
     ->sendError($e->getMessage());

@@ -13,7 +13,7 @@ Ext.define('dopForma.view.login', {
     autoShow: true,
     authSuccess: '',
     authFail: '',
-    myUrl: 'http://127.0.0.5/users/auth' ,
+    //myUrl: 'http://127.0.0.5/users/auth' ,
     constructor: function(o){
       this.authSuccess=o.authSuccess;
       this.authFail=o.authFail;      
@@ -23,7 +23,7 @@ Ext.define('dopForma.view.login', {
     },
     initComponent:function(){
       var self=this;
-      self.URL='http://127.0.0.5/users/auth';
+      self.URL=window.myHost+'/users/auth';
       self.items={
         xtype: 'form',
         reference: 'form',
@@ -34,6 +34,7 @@ Ext.define('dopForma.view.login', {
             queryMode: 'local',
             name: 'userId',
             displayField: 'email',
+            
             valueField: 'id', 
             fieldLabel: 'Пошта',
             allowBlank: false
@@ -48,7 +49,7 @@ Ext.define('dopForma.view.login', {
             hideEmptyLabel: false,
             id: 'authRes',
             value: 'Оберіть свою поштову скриньку та введітьпароль'
-        },
+        }
         
         ],
         buttons: [{
@@ -65,7 +66,13 @@ Ext.define('dopForma.view.login', {
                     });
                 } 
             }
-        }]
+        },
+        {
+           text: 'Отримати пароль'
+          ,id: 'passRestore' 
+          
+        }
+    ]
     };
       
       this.callParent(arguments);
