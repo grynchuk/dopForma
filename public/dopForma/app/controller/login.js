@@ -11,6 +11,8 @@ Ext.define('dopForma.controller.login', {
              , 'choice'
              , 'totalChoice'
              , 'examUser'
+             , 'choseExam'
+             , 'examTypes'
             ],
     views: ['login',
             'choose',
@@ -18,8 +20,9 @@ Ext.define('dopForma.controller.login', {
             'totalChoise',
              'examUser'
            ],
-    userId: 0,
-    password: '',
+      apiKey: '',     
+//    userId: 0,
+//    password: '',
     init: function () {
         
         
@@ -31,9 +34,11 @@ Ext.define('dopForma.controller.login', {
                       exception: self.handleException, 
                       load: self.setData,
                       write: self.refreshTotalChoice
+                 },
+                 '#examStore':{
+                     load: self.setComboStore
                  }
-                 
-            },
+            }
 //            proxy : {
 //                '*':{
 //                    exception: function(){ alert('ddddd'); }
@@ -68,14 +73,16 @@ Ext.define('dopForma.controller.login', {
        self.examStore=Ext.StoreManager.lookup('examStore');
        self.choiceStore=Ext.StoreManager.lookup('choiceStore');
        self.totalChoiceStore=Ext.StoreManager.lookup('totalChoiceStore');
-       
+       self.choseExamStore=Ext.StoreManager.lookup('choseExamStore');
+       self.examTypesStore=Ext.StoreManager.lookup('examTypesStore');
+        
        self.choiceStore
            .getProxy()
            .on('exception', self.handleException);
        
        self.getAuthData();
        
-       if(self.userId){
+       if(self.apiKey){
              self.loadData();
              self.showTabs();
        }else{
@@ -105,9 +112,9 @@ Ext.define('dopForma.controller.login', {
     , loadData :function(){
         var self=this,
             auth={
-         
-                userId: localStorage.getItem('userId'),
-              password: localStorage.getItem('password')
+                apiKey: localStorage.getItem('apiKey')
+//                userId: localStorage.getItem('userId'),
+//              password: localStorage.getItem('password')
         
             };
         
@@ -121,11 +128,20 @@ Ext.define('dopForma.controller.login', {
         self.totalChoiceStore
             .getProxy()
             .setExtraParams(auth);
-    
+        self.examTypesStore
+            .getProxy()
+            .setExtraParams(auth);
+        
+        
         self.examStore.load({
             callback:function(){
-             self.choiceStore.load();                
-             self.totalChoiceStore.load();
+             self.choiceStore.load();
+             self.examTypesStore.load({
+                 callback: function(){
+                      self.totalChoiceStore.load();      
+                 }
+             });
+            
             }
         });
              
@@ -136,13 +152,15 @@ Ext.define('dopForma.controller.login', {
             method: 'post', 
             url: 'http://127.0.0.5/users/auth', 
             authSuccess: function (form, action) {
-                
-             self.userId=Ext.ComponentQuery.query('form [name=userId]')[0].value;
-             self.password=Ext.ComponentQuery.query('form [name=password]')[0].value;   
+                   // console.log('--->',arguments);
+             //self.userId=Ext.ComponentQuery.query('form [name=userId]')[0].value;
+             //self.password=Ext.ComponentQuery.query('form [name=password]')[0].value;   
+             self.apiKey=action.result.data;
              self.setAuthData();
              self.loadData();             
              Ext.getCmp('loginWin').destroy();   
              self.showTabs();
+             
              
             },
             authFail:function(form, action){
@@ -152,19 +170,16 @@ Ext.define('dopForma.controller.login', {
     }
     
     , setAuthData: function(){
-        localStorage.setItem('userId'  ,this.userId);
-        localStorage.setItem('password',this.password);
-        dopForma.getApplication().userId=this.userId;
-        dopForma.getApplication().password=this.password;
+        localStorage.setItem('apiKey',this.apiKey);
+//        dopForma.getApplication().userId=this.userId;
+//        dopForma.getApplication().password=this.password;
     }
     , getAuthData: function(){
-        this.userId=localStorage.getItem('userId');
-        this.password=localStorage.getItem('password');
+        this.apiKey=localStorage.getItem('apiKey');
+//        this.userId=localStorage.getItem('userId');
+//        this.password=localStorage.getItem('password');
      } 
-    , logOut: function(){
-       localStorage.removeItem(userId);
-       localStorage.removeItem(password);
-    }
+ 
     , makeChoice: function(){
        var   form=Ext.getCmp('choiceForma')
            , record=form.getRecord();
@@ -181,11 +196,11 @@ Ext.define('dopForma.controller.login', {
         var forma=Ext.getCmp('choiceForma');
         if(forma && records[0]){
         forma.loadRecord(records[0]);
-        forma.filterExam([
-            records[0].get('exam1'),
-            records[0].get('exam2'),
-            records[0].get('exam3')
-        ]);
+        forma.excludeSelected(forma.exam1);
+        forma.excludeSelected(forma.exam2);
+        forma.excludeSelected(forma.exam3);
+        this.colorForm();
+        
         }
         
     }
@@ -195,18 +210,20 @@ Ext.define('dopForma.controller.login', {
             .getProxy()
             .setExtraParams({
                 exam : rec.get('exam'),
-                userId: localStorage.getItem('userId'),
-                password: localStorage.getItem('password')
+                apiKey: localStorage.getItem('apiKey')
+//                userId: localStorage.getItem('userId'),
+//                password: localStorage.getItem('password')
             }) ;
         this.examUser.load();         
     }
     , refreshTotalChoice: function(){
         this.totalChoiceStore.load();
+        this.colorForm();
     }
     , logOut: function(){
-        
-        localStorage.removeItem('userId');
-        localStorage.removeItem('password');
+         localStorage.removeItem('apiKey');
+//       localStorage.removeItem(userId);
+//       localStorage.removeItem(password);  
         this.showAuth(); 
     }
     , passRestore: function(){
@@ -239,5 +256,62 @@ Ext.define('dopForma.controller.login', {
             }
      });
     }
-}
+  , setComboStore: function(){
+      var forma=Ext.getCmp('choiceForma');
+      if(forma){
+          forma.per1.loadData(this.getPerel(3));
+          forma.per2.loadData(this.getPerel(4));
+      }
+        ;
+  }  
+  , getPerel: function(id){
+      var res=[],
+          store=Ext.data.StoreManager.lookup('examStore')    ;  
+             
+        store.filter('exam_type', +id  );
+        this.examStore.each(function(rec){
+              res.push({
+                  'id':rec.get('id'),
+                  'name':rec.get('name'), 
+                  'exam_type':rec.get('exam_type')
+              });  
+            })  ;
+        store.clearFilter();
+        
+        return res;
+    }
+   , colorForm: function(){
+       var self=this,
+           forma=Ext.getCmp('choiceForma');    
+   
+       self.choseExamStore
+           .getProxy()
+           .setExtraParams({
+               exam1: forma.exam1.getValue(),
+               exam2: forma.exam2.getValue(), 
+               exam3: forma.exam3.getValue(),
+               apiKey: localStorage.getItem('apiKey')
+           }); 
+           
+       self.choseExamStore.load(function(){
+           var res={};
+           self.choseExamStore.each(function(rec){
+               res[rec.get('exam')]=self.getColor( rec.get('num')
+                                                 , rec.get('minNum')
+                                                 )
+           });
+           
+           
+           forma.exam1.setStyle('background-color', (forma.exam1.getValue() in res ? res[forma.exam1.getValue()]:''  )  );
+           forma.exam2.setStyle('background-color', (forma.exam2.getValue() in res ? res[forma.exam2.getValue()]:''  )  );
+           forma.exam3.setStyle('background-color', (forma.exam3.getValue() in res ? res[forma.exam3.getValue()]:''  )  );
+           
+           
+           //console.log('------>', res);
+       });
+   }
+   ,getColor:function(val, minVal){
+       return ( val<minVal ? ( (!val)?'none':'yellow')   : 'lightgreen');
+   }
+  }
 );

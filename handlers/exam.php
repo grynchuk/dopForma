@@ -12,7 +12,7 @@ $app->get(
     function () use ($app) {
    
     $sql="
-select e.id as id,  e.name_ as name_
+select e.id as id,  e.name_ as name_ , e.exam_type as exam_type
        --, et.max_number, et.min_number , ch.num
 from exam e 
      left join 
@@ -39,7 +39,8 @@ where e.exam_type=et.id
     for($i=0, $l=count($res); $i<$l; $i++){
     $resp->data[]=[
                     'id'=>$res[$i]['id'],
-                    'name'=>$res[$i]['name_']
+                    'name'=>$res[$i]['name_'],
+                    'exam_type'=>$res[$i]['exam_type']
                    ];    
     }     
     $resp->send();
@@ -160,6 +161,47 @@ $app->delete(
 // list operations
 
 // типы  экзаменов
+
+$app->get('/exams/types',       
+        function() use($app){
+        $r=$app->request;
+        $page=$r->get('page');
+        $start=$r->get('start');
+        $limit=$r->get('limit');        
+       
+        $dd=examTypes::find('id>0')   ;
+        $i=0;
+        foreach($dd as $val){
+            $d[$i++]=$val;
+        }
+        
+        
+        $data=[];
+        for($i=$start;
+            $i<min([$start+$limit, count($d)]);
+            $i++
+           ){
+             $data[]=[
+                 'id'=>$d[$i]->id,
+                 'exam_type_id'=>$d[$i]->exam_type_id,    
+                 'name_'=>$d[$i]->name_,
+                 'max_number'=>$d[$i]->max_number,
+                 'min_number'=>$d[$i]->min_number
+             ]; 
+            
+           }
+         
+        $resp=respFac::create('ext',$app->request);
+        $resp->success=true;
+        $resp->total=count($data);
+        $resp->data=$data;
+        $resp->send();  
+           
+           
+        }        
+        );
+
+
 /**
  * Добавляет тип экзамена
  */
@@ -341,7 +383,7 @@ $app->get('/exam/choice',
             $i<$l;
             $i++        
            ){
-             $data[]= ['fio'=> $res[$i]['fio'] ]             ;
+             $data[]= ['fio'=> useful::convToWin( $res[$i]['fio'])  ]             ;
            }   
          
         $resp=respFac::create('ext',$app->request);

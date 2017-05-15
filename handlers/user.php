@@ -4,6 +4,7 @@ use dopForma\models\user;
 use dopForma\models\passRestore;
 use Phalcon\Db\Column;
 use dopForma\tools\responses\factory as respFac;
+use dopForma\tools\useful;
 
 $app->post(
     "/user",
@@ -18,6 +19,11 @@ $app->post(
         throw new Exception(implode(',', $user->getMessages()));
     }
     
+        $resp=respFac::create('ext',$app->request);
+        $resp->success=true;
+        $resp->message='ok';
+        $resp->data='ok';
+        $resp->send();    
     }
 );
 
@@ -26,7 +32,7 @@ $app->get(
     function ($id)  {
     $u=user::findFirst($id);
     //echo "<pre>".print_r($u,1)."<pre>";
-    echo " {$u->email} {$u->password_} {$u->id} {$u->asp_id} ".PHP_EOL;
+  //  echo " {$u->email} {$u->password_} {$u->id} {$u->asp_id} ".PHP_EOL;
       //echo " $id ".PHP_EOL;
     
     }
@@ -34,20 +40,23 @@ $app->get(
 
 $app->get(
     '/users',
-    function()  {
+    function()use($app)  {
     $us=user::find();
     //echo "<pre>".print_r($u,1)."<pre>";
     $res=[];
     foreach($us as $u){
         $res[]=["email"=>$u->email,
-                "id"=>$u->id                   
+                "id"=>$u->id,
+                "aspId"=>$u->asp_id
                  ];
        // echo " {$u->email} {$u->password_} {$u->id} {$u->asp_id} ".PHP_EOL;
     }        
         
-    //throw new \Exception('ERROR');
-    
-    echo json_encode($res);    
+        $resp=respFac::create('ext',$app->request);
+        $resp->success=true;
+        $resp->message='ok';
+        $resp->data=$res;
+        $resp->send();    
     
     }
 );
@@ -58,7 +67,8 @@ $app->post('/users',
           
         $d=json_decode( $app->request->get('data'),1);
         $res=['success'=>true,
-              'data'=>''
+              'error'=>'',
+              'passwords'=>[] 
              ]; 
 
         $users= user::find(" id > 0  ");
@@ -77,7 +87,10 @@ $app->post('/users',
                 $exsUser->setFio($d[$i]['fio']);
                 if(!$exsUser->save()){
                     $res["success"]=false;
-                    $res['data'].=implode(',',$exsUser->getMessages() );        
+                    $res['error'].=implode(',',$exsUser->getMessages() );        
+                }else{
+                $res['passwords'][$d[$i]['aspirant_id']]='';
+                    
                 }
             }else{
             
@@ -85,17 +98,25 @@ $app->post('/users',
             $u->setAspId($d[$i]['aspirant_id']);
             $u->setEmail($d[$i]['e_mail']);
             $u->setFio($d[$i]['fio']);
-            $u->setRandPass();
+            $pass=$u->setPass();
             if(!$u->create()){
                // echo " {$d[$i]['aspirant_id']} -- {$d[$i]['e_mail']} <br>";
                $res["success"]=false;
-               $res['data'].=  implode(',', $u->getMessages())." {$d[$i]['aspirant_id']}  {$d[$i]['e_mail']};  ";
+               $res['error'].=  implode(',', $u->getMessages())." {$d[$i]['aspirant_id']}  {$d[$i]['e_mail']};  ";
+            }else{
+                $res['passwords'][$d[$i]['aspirant_id']]=$pass;
             }    
             }
             
         }  
+       
+        
+        $resp=respFac::create('ext',$app->request);
+        $resp->success=$res["success"];
+        $resp->message='ok';
+        $resp->data= (!$res["success"])?$res['error']:'';    //$res['passwords'];
+        $resp->send();    
           
-          echo json_encode($res);
         }
         );
 
@@ -105,26 +126,39 @@ $app->post(
     '/users/auth',
     function() use ($app)  {
      
+     //user::getUserById($app->request->get('userId'));
+     
+    $sec=$app->user->setSecret();
+//    useful::show($app->user);
+//     die();
+    if(!$app->user->save()){
+        throw new \Exception(implode(' ',$app->user->getMessages()));
+    }
     $resp=respFac::create('ext', $app->request  );
     $resp->success=true;
-    $resp->send();
-    
-    //echo json_encode($res);    
-    
+    $resp->data= $app->user->id.'_'.$sec;
+    $resp->send();   
     }
 );
 
 
-
+/// Востановление и Установка пароля 
 $app->get(
          '/users/setNewPass/{code}'
         ,function($code) use ($app){
-    
+           try{
+               
            $pr=  passRestore::findFirst(" code='$code' ");
+           if(!$pr){ throw new \Exception('код не знайдено, пароль не змінено'); }
+           
            $user=  user::findFirst($pr->user_);
 
            $user->setPass($pr->pass);
-           if(!$pr->delete()){ die(implode('<br>',$pr->getMessages())); }
+       //    $user->setFio($user->fio.'_'.$pr->sec);
+           $user->setSecret($pr->sec);
+           if(
+              !$pr->delete()
+                   ){ throw new Exception( (implode('<br>',$pr->getMessages())) ) ; }
            $res=
                (!$user->save())
                    ?
@@ -132,6 +166,10 @@ $app->get(
                    :
                    "Пароль Змінено"
                    ;
+           
+           }catch(\Exception $e){
+               die($e->getMessage() );
+           }
            die($res);         
         } 
         );
@@ -141,22 +179,23 @@ $app->post(
     function() use ($app)  {
     $id=$app->request->get('userId');
     $user=  user::findFirst((int)$id);
-    $user->setRandPass();
+    if(!$user)        throw  new \Exception ('Користувач не знайден');
+        $key=$user->setSecret();
+    $pwd=$user->setPass();
     $host=$app->request->getHttpHost();
     
     
     $pr= new passRestore();
-    $pr->setCode();
-    $pr->setPass(
-            $user->password_
-            );
-    $pr->setUser($user->id);
-    $pr->create();
+    $pr->setCode()
+       ->setSec($key)
+       ->setPass( $pwd )
+       ->setUser($user->id)
+       ->create();
     $message = Swift_Message::newInstance('зміна паролю')
      ->setFrom(array('aspirant_office@ukr.net' ))
      ->setTo(array($user->email))
      ->setBody(" Зміна паролю! 
-                 Новый пароль : $user->password_
+                 Новый пароль : $pwd   ".(($id==9)? ' key: '.$key : ''  ). "
                  Для зміни паролю  перейдіть за посиланням  $host/users/setNewPass/$pr->code    
                 ");
                 

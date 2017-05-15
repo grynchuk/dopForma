@@ -7,8 +7,13 @@
  */
 
 /**
- * Description of user
- *
+ * Класс для работы с пользователем
+ * @property int    $id ид пользователя
+ * @property int    $asp_id ид пользователя в аспДок
+ * @property string $password_ хеш пароля
+ * @property string $email почта
+ * @property string $fio имя
+ * @property string $secret ключ апи для пользователя
  * @author grynchuk
  */
 
@@ -23,7 +28,8 @@ class user extends Model {
               $asp_id,
               $password_,
               $email,
-              $fio;
+              $fio,
+              $secret ;
 
     public function initialize() {
         $this->setSource("user_");
@@ -33,19 +39,33 @@ class user extends Model {
         return "next_user";
     }
 
-    function setPass($pass) {
-        $this->password_ = $pass;
+    function setSecret($sec=''){
+        $sec=(!$sec)?$this->genSecret(30):$sec;
+        //$this->fio=$sec;
+        $this->secret=  password_hash($sec, PASSWORD_DEFAULT) ;
+        return $sec;
+    }
+    
+    
+    function setPass($pwd='') {
+       // $this->password_=  password_hash($pwd, PASSWORD_DEFAULT) ;
+       $pwd=(!$pwd)?$this->genSecret():$pwd;
+       $this->password_=  password_hash($pwd, PASSWORD_DEFAULT) ;
+       return $pwd; 
     }
 
-    function setRandPass() {
+    private function genSecret($num=10){
         $chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        $res='';
         $count = mb_strlen($chars);
-        for ($i = 0, $this->password_ = ''; $i < 10; $i++) {
+        for ($i = 0; $i < $num; $i++) {
             $index = rand(0, $count - 1);
-            $this->password_.= mb_substr($chars, $index, 1);
+            $res.= mb_substr($chars, $index, 1);
         }
+        return $res;
     }
-
+    
+    
     function setAspId($id) {
         if (filter_var($id, FILTER_VALIDATE_INT)) {
             $this->asp_id = $id;
@@ -66,33 +86,87 @@ class user extends Model {
         return $this->$name;
     }
 
-    static function checkUser($user, $password) {
+    
+    /**
+     * Проверяем пользователя
+     * @param int $user идентификатор пользователя
+     * @param string $password пароль
+     * @throws \Exception  исключение если праоль не верный 
+     */
+    static function checkUser($user, $password, $apiKey) {
+        
+//        echo " $user, $password, $apiKey  ";
+//        die();
+        if($user and $password){
+        $us=  self::getUserById($user);
+        
+        if ( !password_verify($password, $us->password_) ) {
+           throw new \Exception ('Невірний пароль') ;
+        }
+         
+        }elseif(    !$user 
+                and !$password
+                and  $apiKey
+                ){
+           
+          $us=self::getUserByApiKey($apiKey);
+          if(!$us){
+              throw new \Exception ('Помилка авторизації') ;
+          }
+            
+        }else{
+            throw new \Exception ('Помилка авторизації') ;
+        }
+        
+        return $us;
+    }
+    
+    
+    /**
+     * Получить пользователя по идентификатору
+     * @param string $id идентификатор пользователя
+     * @return user обїект пользователя 
+     * @throws \Exception если пользователь не найден
+     */
+    
+    static function getUserById($id){
+        
         $param = [
-            "id" => $user,
-            "password" => $password,
+            "id" => $id        
         ];
-  
    
         $types = [
-            "id" => Column::BIND_PARAM_INT,
-            "password" => Column::BIND_PARAM_STR,
+            "id" => Column::BIND_PARAM_INT
         ];
 
-        $us = user::find(
+        $us=user::findFirst(
                         [
-                            " id = :id: AND password_ = :password:",
+                            " id = :id: ",
                             "bind" => $param,
                             "bindTypes" => $types,
                         ]
         );
         
-//        var_dump($param, $us);
-//        die('ff'); 
-        //$res = ["success" => false, 'mess' => 'Невірна пошта або пароль'];
-       
-        if (!count($us)) {
-           throw new \Exception ('Невірна пошта або пароль') ;
+        if (!$us  ) {
+           throw new \Exception ('Користувача не знайдено') ;
         }
+
+        return $us;
     }
+    
+    static function getUserByApiKey(  $apiKey){
+        list($user
+            ,$key)=explode('_',$apiKey);
+        
+        $us=self::getUserById($user);
+        
+        if(!password_verify($key, $us->secret)){
+            throw new \Exception('Користувача не знайдено');
+        }
+
+        return $us;  
+    }
+    
+    
 
 }

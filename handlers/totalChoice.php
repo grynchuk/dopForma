@@ -36,10 +36,25 @@ $app->get(
                    
        ];
        
-     
-    
+        $getExam=function($r, $name){
+            $res='';
+            if(array_key_exists($name, $_REQUEST)){
+                $res=$r->get($name);
+            }
+            return $res;
+        };
+         $r=$app->request;
         
-        $r=$app->request;
+        $exams=[];
+        
+        foreach(['exam1',
+                'exam2',
+                'exam3'] as $val){
+           if( $ex=$getExam($r,$val)){
+           $exams[]=$ex;    
+           }
+        }
+        
         $page=$r->get('page');
         $start=$r->get('start');
         $limit=$r->get('limit');        
@@ -59,6 +74,11 @@ $app->get(
         }else{
             $filter='';
         }
+        
+        if($exams){
+            $filter.= ' and e.id in ('.implode(',',$exams).') ';
+        }
+        
         
         $sql="select e.id as exam,  et.max_number as maxNum, et.min_number as minNum , count(c.user_) as num
 from exam e 

@@ -7,9 +7,13 @@
  */
 
 /**
- * Description of user
+ * Класс для получения новых паролей
  *
  * @author grynchuk
+ * @property int $code уникальный код подтверждения
+ * @property int $user_ код пользователя
+ * @property string $pass пароль пользователя
+ * @property string $sec  токен
  */
 
 namespace dopForma\models;
@@ -21,7 +25,9 @@ class passRestore extends Model {
 
     protected $code,
               $user_,
-              $pass
+              $pass,
+              $sec   
+            
               ;
 
     public function initialize() {
@@ -29,17 +35,25 @@ class passRestore extends Model {
     }
 
 
+     function setSec($sec){
+         $this->sec=$sec;
+         return $this;
+     }
+    
     function setPass($pass) {
         $this->pass= $pass;
+        return $this;
     }
 
     function setCode() {
        $this->code=time();
+       return $this;
     }
 
     
     function setUser($user){
         $this->user_=$user;
+        return $this;
     }
     
 

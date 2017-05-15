@@ -11,12 +11,10 @@ $app->get(
        //  "/choice",
     "/choice",
     function () use ($app) {
-     
-      $r=$app->request;
-      $userId=$r->get('userId');
+  
       
         $param = [
-            "userId" => $userId
+            "userId" => $app->user->id
         ];
   
       
@@ -30,7 +28,7 @@ $app->get(
 //                            " bindTypes" => $types,
 //                            
 //                        ]);
-//        die();
+       // die('dd');
 //        
         $us = choice::find(
                         [
@@ -80,7 +78,7 @@ $app->put(
     "/choice/{params}",
     function ($params) use ($app) {
       $data=$app->request->getJsonRawBody(TRUE);
-      $userId=$app->request->get('userId');
+      $userId=$app->user->id;
     
       foreach(['1','2','3'] as $val){
          if(!array_key_exists('exam'.$val, $data)){

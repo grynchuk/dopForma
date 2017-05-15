@@ -69,8 +69,7 @@ Ext.define('dopForma.view.login', {
         },
         {
            text: 'Отримати пароль'
-          ,id: 'passRestore' 
-          
+          ,  id: 'passRestore' 
         }
     ]
     };
