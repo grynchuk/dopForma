@@ -150,7 +150,7 @@ Ext.define('dopForma.controller.login', {
         var self=this;
         Ext.create('dopForma.view.login', {
             method: 'post', 
-            url: 'http://127.0.0.5/users/auth', 
+            url: window.myHost+'/users/auth', 
             authSuccess: function (form, action) {
                    // console.log('--->',arguments);
              //self.userId=Ext.ComponentQuery.query('form [name=userId]')[0].value;
