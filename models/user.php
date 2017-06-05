@@ -60,7 +60,7 @@ class user extends Model {
         $count = strlen($chars);
         for ($i = 0; $i < $num; $i++) {
             $index = rand(0, $count - 1);
-            $res.= mb_substr($chars, $index, 1);
+            $res.= substr($chars, $index, 1);
         }
         return $res;
     }
