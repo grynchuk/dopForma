@@ -57,7 +57,7 @@ class user extends Model {
     private function genSecret($num=10){
         $chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
         $res='';
-        $count = mb_strlen($chars);
+        $count = strlen($chars);
         for ($i = 0; $i < $num; $i++) {
             $index = rand(0, $count - 1);
             $res.= mb_substr($chars, $index, 1);
