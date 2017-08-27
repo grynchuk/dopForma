@@ -72,23 +72,15 @@ $di->set(
 $eventsManager = new EventsManager();
 $eventsManager->attach(
         "micro:beforeExecuteRoute", function (Event $event, $app) use ($di) {
-    $userId = '';
-    $pwd = '';
-    $apiKey = '';
-    if ($app->request->has('apiKey')) {
-        $apiKey = trim($app->request->get('apiKey'));
-    } elseif ($app->request->has('userId')
-            and
-            $app->request->has('password')
-    ) {
-        $userId = trim($app->request->get('userId'));
-        $pwd = trim($app->request->get('password'));
-    }
+   
 
 
     $url = $app->request->getServer('SCRIPT_URL');
 
     if (
+    // Тут идет проверка если запрос на список пользователей
+    //  или на установку ноавого или получение ссылки на уст. 
+    //  пароля то никаких проверок не проводим        
     // получаем список пользователей
             ( $app->request->getServer('SCRIPT_URL') == '/users'
             and $app->request->isGet()
@@ -104,9 +96,7 @@ $eventsManager->attach(
 
         try {
             $user=user::checkUser(
-                      $userId
-                    , $pwd
-                    , $apiKey                   
+                     $app->request
             );
             
        $di->set( 'user', function ( ) use ($user){
@@ -125,7 +115,7 @@ $eventsManager->attach(
 
 
 $app = new Micro($di);
-
+// Тут установим  обработчики для закпросов
 include_once __DIR__ . "/../handlers/choice.php";
 
 include_once __DIR__ . "/../handlers/user.php";
@@ -134,17 +124,6 @@ include_once __DIR__ . "/../handlers/exam.php";
 
 include_once __DIR__ . "/../handlers/totalChoice.php";
 
-
-
-//$app->error(
-//    function ($ex) use ($app) {    
-//    echo "-----";
-//         respFac::create('ext', $app->request )
-//         ->sendError($ex->getMessage());
-//    }
-//);
-//$app->setEventsManager($eventsManager);    
-//$app->handle();
 
 
 

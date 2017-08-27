@@ -5,7 +5,7 @@ use dopForma\models\passRestore;
 use Phalcon\Db\Column;
 use dopForma\tools\responses\factory as respFac;
 use dopForma\tools\useful;
-
+//Добавляем пользователя
 $app->post(
     "/user",
     function () use ($app) {
@@ -26,7 +26,7 @@ $app->post(
         $resp->send();    
     }
 );
-
+// Получаем пользователя по id
 $app->get(
     '/user/{id}',
     function ($id)  {
@@ -37,7 +37,7 @@ $app->get(
     
     }
 );
-
+// Получаем пользователей 
 $app->get(
     '/users',
     function()use($app)  {
@@ -61,7 +61,7 @@ $app->get(
     }
 );
 
-
+// Обновляем пользователей
 $app->post('/users',
         function () use($app){
           

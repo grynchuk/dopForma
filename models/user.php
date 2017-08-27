@@ -93,7 +93,26 @@ class user extends Model {
      * @param string $password пароль
      * @throws \Exception  исключение если праоль не верный 
      */
-    static function checkUser($user, $password, $apiKey) {
+    static function checkUser($req) {
+        
+    $user = '';
+    $password = '';
+    $apiKey='';
+    // тут получаем данные о авторизации пользователя
+    // для дальнейшей проверки 
+    if ($req->has('apiKey')) {
+        $apiKey = trim($req->get('apiKey'));
+    } elseif ($req->has('userId')
+            and
+            $req->has('password')
+    ) {
+        $user = trim($req->get('userId'));
+        $password = trim($req->get('password'));
+    }
+        
+        
+        
+        
         
 //        echo " $user, $password, $apiKey  ";
 //        die();
@@ -118,9 +137,47 @@ class user extends Model {
             throw new \Exception ('Помилка авторизації') ;
         }
         
+        
+        $url = $req->getServer('SCRIPT_URL');
+        
+        
+        self::checkUrl($us->id, $url, $req->getMethod());
+                    
+        
         return $us;
     }
     
+    /**
+     * проверка доступности 
+     * @param type $userId
+     * @param type $url
+     * @param type $method
+     * @throws \Exception
+     */
+   private static function checkUrl($userId, $url, $method){
+//       var_dump($userId, $url, $method);
+//       die();
+       //return;
+    $urls=[
+        '/^\/users$/'=>  ['POST'],
+        '/^\/user$/'=> ['POST'],
+        '/^\/exam$/'=> ['POST', 'PUT', 'DELETE']
+    ];
+       
+      foreach($urls as $pat => $methods){
+         
+          if(preg_match($pat,$url)){
+              if( in_array( strtoupper($method), $methods) 
+                      and $userId!=9 
+                      ){
+                  throw new \Exception('Operation denied');
+              }
+          }
+      } 
+       
+       
+   }
+   
     
     /**
      * Получить пользователя по идентификатору

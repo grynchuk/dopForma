@@ -112,6 +112,8 @@ $app->put(
        if(!$exam->save()){
               $errors=' Error '.implode(',', $exam->getMessages()) ;        
        }
+    }else{
+        $errors=' екзамен або його тип не знайдено';
     }
     
     }
